@@ -268,56 +268,73 @@ function OrderService(){
 //-- Models
 
 function OrderModel(){
-	this.items = new ko.observableArray([]);
-	this.total = ko.pureComputed(function(){
-		return this.items().reduce(function(subTotal, item){
+	var self = this;
+
+	self.items = new ko.observableArray([]);
+	self.total = ko.pureComputed(function(){
+		return self.items().reduce(function(subTotal, item){
 			return subTotal + item.total();
 		}, 0);
-	}, this);
+	});
+
+	self.addNewLine = function(){
+		var newLine = new OrderLineModel({
+			name: 'new item',
+			price: 0,
+			quantity: 1
+		});
+		self.items.push(newLine);
+		return newLine;
+	};
 }
 
 function OrderLineModel(rawDTO){
-	this.name = ko.observable(rawDTO.name || '');
-	this.quantity = ko.observable(rawDTO.quantity);
-	this.price = ko.observable(rawDTO.price);
-	this.total = ko.pureComputed(function(){
-		if(this.quantity() != null && this.price() != null){
-			return this.quantity() * this.price();
+	var self = this;
+
+	self.name = ko.observable(rawDTO.name || '');
+	self.quantity = ko.observable(rawDTO.quantity);
+	self.price = ko.observable(rawDTO.price);
+	self.total = ko.pureComputed(function(){
+		if(self.quantity() != null && self.price() != null){
+			return self.quantity() * self.price();
 		}
 		else{
 			return 0;
 		}
-	}, this);
+	});
 }
 
 //-- "Pretty" Models
 
-function OrderPrettyModel(orderModel){
+function OrderPresModel(orderModel){
+	var self = this;
+
 	var items = orderModel.items().map(function(itemModel){
-		return new OrderLinePrettyModel(itemModel);
+		return new OrderLinePresModel(itemModel);
 	});
 
-	this.model = orderModel;
-	this.items = ko.observableArray(items);
-	
-	this.addLine = function(lineModel){
-		this.model.items.push(lineModel);
-		this.items.push(new OrderLinePrettyModel(lineModel));
+	self.model = orderModel;
+	self.items = ko.observableArray(items);
+
+	self.addNewLine = function(lineModel){
+		var newOrderLine = self.model.addNewLine();
+		self.items.push(new OrderLinePresModel(newOrderLine));
 	};
 
-	this.removeLine = function(lineModel){
+	self.removeLine = function(linePresModel){
 		// assume indexes are the same
-		var index = this.model.items.indexOf(lineModel);
-		this.items.splice(index, 1);
-		this.model.items.splice(index, 1);
+		var index = this.model.items().indexOf(linePresModel.model);
+		console.log(index);
+		self.items.splice(index, 1);
+		self.model.items.splice(index, 1);
 	};
 
-	this.total = ko.pureComputed(function(){
-		return currencyType.format(this.model.total());
-	}, this);
+	self.total = ko.pureComputed(function(){
+		return currencyType.format(self.model.total());
+	});
 
-	this.isValid = ko.pureComputed(function(){
-		var firstInvalid = this.items().find(function(item){
+	self.isValid = ko.pureComputed(function(){
+		var firstInvalid = self.items().find(function(item){
 			return item.isValid() == false;
 		});
 		if(firstInvalid != null){
@@ -326,32 +343,36 @@ function OrderPrettyModel(orderModel){
 		else{
 			return true;
 		}
-	}, this);
+	});
 
-	this.isSaveAvailable = ko.pureComputed(function(){
-		return this.isValid() && this.items().length > 0;
-	}, this)
+	self.isSaveAvailable = ko.pureComputed(function(){
+		return self.isValid() && self.items().length > 0;
+	});
 }
 
-function OrderLinePrettyModel(orderLine){
-	this.model = orderLine;
+function OrderLinePresModel(orderLine){
+	var self = this;
 
-	this.name = orderLine.name.extend({ validate: { type: stringType, min: 1, max: 25, required: true } });
-	this.quantity = orderLine.quantity.extend({ validate: { type: integerType, min: 1, max: 500, required: true } });
-	this.price = orderLine.price.extend({ validate: { type: currencyType, min: 0, max: 100, required: true } });
-	this.total = ko.pureComputed(function(){
+	self.model = orderLine;
+
+	self.name = orderLine.name.extend({ validate: { type: stringType, min: 1, max: 25, required: true } });
+	self.quantity = orderLine.quantity.extend({ validate: { type: integerType, min: 1, max: 500, required: true } });
+	self.price = orderLine.price.extend({ validate: { type: currencyType, min: 0, max: 100, required: true } });
+
+	self.total = ko.pureComputed(function(){
 		return currencyType.format(orderLine.total());
 	});
-	this.isValid = ko.pureComputed(function(){
-		return !this.name.validation().isError() &&
-			!this.quantity.validation().isError() &&
-			!this.price.validation().isError();
-	}, this);
+
+	self.isValid = ko.pureComputed(function(){
+		return !self.name.validation().isError() &&
+			!self.quantity.validation().isError() &&
+			!self.price.validation().isError();
+	});
 }
 
 //-- Viewmodel
 
-function ItemListViewModel(orderService){
+function OrderViewModel(orderService){
 	var self = this;
 	
 	self.order = ko.observable();
@@ -361,24 +382,20 @@ function ItemListViewModel(orderService){
 			self.createNewOrder();
 		}
 
-		// create a new model and prettymodel and add to collection
-		var newOrderLine = new OrderLineModel({
-			name: 'new item',
-			quantity: 1,
-			price: 0
-		});
-		self.order().addLine(newOrderLine);
+		self.order().addNewLine();
 	};
 
-	self.removeItem = function(item){};
+	self.removeItem = function(orderLine){
+		self.order().removeLine(orderLine);
+	};
 
 	self.createNewOrder = function(){
 		var newOrder = orderService.getNewOrder()
-		self.order(new OrderPrettyModel(newOrder));
+		self.order(new OrderPresModel(newOrder));
 	};
 
 	self.saveToServer = function(){
-		if(self.order() != null){
+		if(self.order() != null && self.order().isSaveAvailable()){
 			orderService.saveOrder(self.order().model);
 		}
 	};
@@ -388,7 +405,7 @@ function ItemListViewModel(orderService){
 //-- run
 
 var orderService = new OrderService();
-var viewmodel = new ItemListViewModel(orderService);
+var viewmodel = new OrderViewModel(orderService);
 viewmodel.createNewOrder();
 viewmodel.addNextItem();
 ko.applyBindings(viewmodel);
