@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Model Validation and Formatting</title>
+    <script src="lib/knockout-3.4.0.js"></script>
+	<style>
+		.error{
+			border: color 1px solid red;
+		}
+		.error-message{
+			position: absolute;
+			border: 1px solid red;
+			background-color: #eeeeee;
+			padding: 3px;
+		}
+		.disabled{
+			color: #999999;
+		}
+	</style>
+</head>
+<body>
+
+Enter Some Items:
+<table data-bind="if: order">
+	<tr>
+		<th></th>
+		<th>Name</th>
+		<th>Price</th>
+		<th>Quantity</th>
+	</tr>
+	<tbody data-bind="foreach: order().items">
+		<tr>
+			<td><a href="javascript: void(0);" data-bind="click: $parent.removeItem">del</a></td>
+			<td><validated-input params="field: name, validation: name.validation" /></td>
+			<td><validated-input params="field: price, validation: price.validation" /></td>
+			<td><validated-input params="field: quantity, validation: quantity.validation" /></td>
+			<td data-bind="text: total"></td>
+		</tr>
+	</tbody>
+	<tfoot>
+		<tr>
+			<td><a href="javascript: void(0);"  data-bind="click: addNextItem">add</a></td>
+			<td></td>
+			<td></td>
+			<td><input type="button" value="save" data-bind="enable: order().isSaveAvailable, click: saveToServer" /></td>
+			<td data-bind="text: order().total"></td>
+		</tr>
+	</tfoot>
+</table>
+
+
+<script type="text/javascript">
+
+//-- extender definition
+
+ko.extenders.validate = function (target, options) {
+	return createValidatedFormattedInput(target, options);
+};
+
+function createValidatedFormattedInput(target, options){
+	var type = options.type;
+
+	// see note in component for why this is an observable
+	var validationProperties = ko.observable({
+		isError: ko.observable(false),
+		errorMessage: ko.observable(null)
+	});
+
+	var forceReadDirty = ko.observable("");
+
+	var readFunction = function(){
+		return type.format(target()) + forceReadDirty();
+	};
+
+	var writeFunction = function(newValue){
+		// allow empty values if this is a non-required field
+		if(options.required === false && newValue === ''){
+			target(type.emptyValue);
+			validationProperties().isError(false);
+			validationProperties().errorMessage(null);
+			return;
+		}
+
+		// will it parse?
+		var parseResult = type.tryParse(newValue);
+		if(parseResult.isError){
+			validationProperties().errorMessage(parseResult.errorMessage);
+			validationProperties().isError(true);
+			return;
+		}
+
+		// will it validate for type validation?
+		var validationResult = type.tryValidate(parseResult.value, options);
+		if(validationResult.isError){
+			validationProperties().errorMessage(validationResult.errorMessage);
+			validationProperties().isError(true);
+			return;
+		}
+
+		// custom validation?
+		if(options.validate != null){
+			validationResult = options.validate(validationResult.value);
+			if(validationResult.isError){
+				validationProperties().errorMessage(validationResult.errorMessage);
+				validationProperties().isError(true);
+				return;
+			}
+		}
+
+		// must be good, write it through
+		if(target() == validationResult.value){
+			// Only occurs when we overwrite a value from a
+			// bad one back to it's original value. Does not
+			// impact the underlying model, only the formatted
+			// output.
+			forceReadDirty(" ");
+			forceReadDirty("");
+		}
+		else{
+			target(validationResult.value);
+		}
+		validationProperties().isError(false);
+		validationProperties().errorMessage(null);
+	};
+
+	var computed = ko.computed({
+		read: readFunction,
+		write: writeFunction
+	});
+	computed.validation = validationProperties;
+	return computed;
+}
+
+//-- component to display the field
+
+ko.components.register('validated-input', {
+	viewModel: function(params){
+		this.field = params.field;
+		// component define each field as a new computed or value,
+		// so we have to pass validation in in parallel and define it
+		// as an observable in the extension so we don't have a stale
+		// value when the next line is replaced or table rows are removed
+		this.validation = params.validation;
+	},
+	template: 
+		'<input type="text" data-bind="value: field, css: { \'error\': validation().isError }" />' +
+		'<div class="error-message" style="display: none;" data-bind="text: validation().errorMessage, style: { display: validation().isError() ? \'block\' : \'none\' }"></div>'
+});
+
+//-- type definitions
+
+function failedInput(message){
+	return {
+		isError: true,
+		errorMessage: message
+	};
+}
+
+function successfulInput(value){
+	return {
+		isError: false,
+		value: value
+	};
+}
+
+var stringType = {
+	emptyValue: '',
+	format: function(value){
+		return value;
+	},
+	tryParse: successfulInput,
+	tryValidate: function(value, options){
+		if(options.min != undefined && value.length < options.min){
+			return failedInput("'" + value + "' is shorter than the require minimum of " + options.min + " characters long");
+		}
+
+		if(options.max != undefined && value.length > options.max){
+			return failedInput("'" + value + "' is longer than  the supported " + options.max + " characters");
+		}	
+
+		return successfulInput(value);
+	}
+};
+
+var integerType = {
+	emptyValue: null,
+	format: function(value){
+		if(value == null){
+			return '';
+		}
+		else{
+			return value.toFixed(0);
+		}
+	},
+	tryParse: function(value){
+		var parsedResult = parseInt(value.replace(/,/g,''));
+		if(isNaN(parsedResult)){
+			return failedInput("'" + value + "' is not a valid integer");
+		}
+		else{
+			return successfulInput(parsedResult);
+		}
+	},
+	tryValidate: function(value, options){
+		if(options.min != undefined && value < options.min){
+			return failedInput("'" + value + "' is less than the supported minimum of '" + options.min + "'");
+		}
+
+		if(options.max != undefined && value > options.max){
+			return failedInput("'" + value + "' is greater than the supported maximum of '" + options.max + "'");
+		}
+
+		return successfulInput(value);		
+	}
+};
+
+// a currency type that only supports USD
+var currencyType = {
+	emptyValue: null,
+	format: function(value){
+		if(value == null){
+			return '';
+		}
+		else{
+			return value.toLocaleString('en-US', {
+				style: 'currency',
+				currency: 'USD',
+				currencyDisplay: 'symbol',
+				useGrouping: true
+			});
+		}
+	},
+	tryParse: function(value){
+		// strip out commas and $
+		var parsedResult = parseFloat(value.replace(/[\$,]/g,''));
+		if(isNaN(parsedResult)){
+			return failedInput("'" + value + "' is not a valid currency value");
+		}
+		else{
+			return successfulInput(parsedResult);
+		}
+	},
+	tryValidate: function(value, options){
+		if(options.min != undefined && value < options.min){
+			return failedInput("'" + value + "' is less than the supported minimum of '" + options.min + "'");
+		}
+
+		if(options.max != undefined && value > options.max){
+			return failedInput("'" + value + "' is greater than the supported maximum of '" + options.max + "'");
+		}
+
+		return successfulInput(value);		
+	}
+};
+
+//-- Service
+
+function OrderService(){
+	this.getNewOrder = function(){
+		return new OrderModel();
+	};
+	this.saveOrder = function(order){
+		alert(ko.toJSON(order));
+	};
+}
+
+//-- Models
+
+function OrderModel(){
+	this.items = new ko.observableArray([]);
+	this.total = ko.pureComputed(function(){
+		return this.items().reduce(function(subTotal, item){
+			return subTotal + item.total();
+		}, 0);
+	}, this);
+}
+
+function OrderLineModel(rawDTO){
+	this.name = ko.observable(rawDTO.name || '');
+	this.quantity = ko.observable(rawDTO.quantity);
+	this.price = ko.observable(rawDTO.price);
+	this.total = ko.pureComputed(function(){
+		if(this.quantity() != null && this.price() != null){
+			return this.quantity() * this.price();
+		}
+		else{
+			return 0;
+		}
+	}, this);
+}
+
+//-- "Pretty" Models
+
+function OrderPrettyModel(orderModel){
+	var items = orderModel.items().map(function(itemModel){
+		return new OrderLinePrettyModel(itemModel);
+	});
+
+	this.model = orderModel;
+	this.items = ko.observableArray(items);
+	
+	this.addLine = function(lineModel){
+		this.model.items.push(lineModel);
+		this.items.push(new OrderLinePrettyModel(lineModel));
+	};
+
+	this.removeLine = function(lineModel){
+		// assume indexes are the same
+		var index = this.model.items.indexOf(lineModel);
+		this.items.splice(index, 1);
+		this.model.items.splice(index, 1);
+	};
+
+	this.total = ko.pureComputed(function(){
+		return currencyType.format(this.model.total());
+	}, this);
+
+	this.isValid = ko.pureComputed(function(){
+		var firstInvalid = this.items().find(function(item){
+			return item.isValid() == false;
+		});
+		if(firstInvalid != null){
+			return false;
+		}
+		else{
+			return true;
+		}
+	}, this);
+
+	this.isSaveAvailable = ko.pureComputed(function(){
+		return this.isValid() && this.items().length > 0;
+	}, this)
+}
+
+function OrderLinePrettyModel(orderLine){
+	this.model = orderLine;
+
+	this.name = orderLine.name.extend({ validate: { type: stringType, min: 1, max: 25, required: true } });
+	this.quantity = orderLine.quantity.extend({ validate: { type: integerType, min: 1, max: 500, required: true } });
+	this.price = orderLine.price.extend({ validate: { type: currencyType, min: 0, max: 100, required: true } });
+	this.total = ko.pureComputed(function(){
+		return currencyType.format(orderLine.total());
+	});
+	this.isValid = ko.pureComputed(function(){
+		return !this.name.validation().isError() &&
+			!this.quantity.validation().isError() &&
+			!this.price.validation().isError();
+	}, this);
+}
+
+//-- Viewmodel
+
+function ItemListViewModel(orderService){
+	var self = this;
+	
+	self.order = ko.observable();
+
+	self.addNextItem = function(){
+		if(self.order() == null){
+			self.createNewOrder();
+		}
+
+		// create a new model and prettymodel and add to collection
+		var newOrderLine = new OrderLineModel({
+			name: 'new item',
+			quantity: 1,
+			price: 0
+		});
+		self.order().addLine(newOrderLine);
+	};
+
+	self.removeItem = function(item){};
+
+	self.createNewOrder = function(){
+		var newOrder = orderService.getNewOrder()
+		self.order(new OrderPrettyModel(newOrder));
+	};
+
+	self.saveToServer = function(){
+		if(self.order() != null){
+			orderService.saveOrder(self.order().model);
+		}
+	};
+
+}
+
+//-- run
+
+var orderService = new OrderService();
+var viewmodel = new ItemListViewModel(orderService);
+viewmodel.createNewOrder();
+viewmodel.addNextItem();
+ko.applyBindings(viewmodel);
+
+</script>
+</body>
+</html>
