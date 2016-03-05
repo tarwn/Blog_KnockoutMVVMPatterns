@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>User Conversations</title>
+    <script src="../lib/knockout-3.4.0.js"></script>
+    <script src="../lib/bluebird-3.3.3.js"></script>
+	<style>
+		body{
+			color: #312c32;
+			font-family: sans-serif;
+			font-size: 11pt;
+		}
+		a:hover{
+			color: #98dafc;
+		}
+		a.disabled{
+			color: #666666;
+		}
+		input[type=text]{
+			width: 150px;
+			height: 20px;
+			margin: 2px 0px;
+			border-radius: 4px;
+			border: 1px solid #dddddd;
+			padding: 2px 6px;
+			line-height: 16px;
+		}
+		input[type=text]:focus{
+			border: 1px solid #98dafc;
+		}
+		input[type=button]{
+			background-color: #98dafc;
+			border: 1px solid #312c32;
+			color: #312c32;
+			border-radius: 4px;
+			min-width: 100px;
+			padding: 4px;
+		}
+		input[type=button]:hover{
+			background-color: #A8Eafc;
+		}
+		input[type=button]:disabled{
+			background-color: #eeeeee;
+			border-color: #666666;
+			color: #666666;
+		}
+		.button-strip{
+			margin-top: 10px;
+			text-align: right;
+		}
+
+		.form-area{
+			background-color: white;
+			border: 1px solid #312c32;
+			width: 380px;
+			padding: 10px;
+			border-radius: 8px;
+			vertical-align: middle;
+		}
+		.form-area h3{
+			margin-top: 0px;
+			border-bottom: 1px solid 
+		}
+		.form-area label{
+			display: inline-block;
+			width: 150px;
+			text-align: right;
+			padding-right: .5em;
+			line-height: 24px;
+		}
+
+		.order-history{
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.order-history td,
+		.order-history th{
+			padding: 2px 4px;
+		}
+		.order-history th{
+			border-bottom: 1px solid #666666;
+		}
+		.order-history tbody tr:nth-child(odd) {
+		  background-color: #eeeeee;
+		}
+		.order-history tbody tr.new-order {
+		  background-color: #eeffee;
+		}
+		.order-history tbody tr.new-order:nth-child(odd) {
+		  background-color: #ddffdd;
+		}
+
+		.dialog-area{
+			position: absolute;
+			top: 0px;
+			right: 0px;
+			bottom: 0px;
+			left: 0px;
+		}
+		.whiteout{
+			position: absolute;
+			z-index: 100;
+			top: 0px;
+			right: 0px;
+			bottom: 0px;
+			left: 0px;
+			background-color: white;
+			opacity: .8;
+		}
+		.dialog{
+			position: relative;
+			z-index: 101;
+			top: 200px;
+			width: 400px;
+			margin: auto;
+			background-color: white;
+			border: 1px solid #312c32;
+			padding: 10px;
+			border-radius: 8px;
+		}
+	</style>
+</head>
+<body>
+
+<!-- API Example -->
+<h1>A Basic Form + Fake API Call (Save Button)</h1>
+<div class="form-area" data-bind="with: shippingForm">
+	<h3>Shipping Information</h3>
+	<label for="txtName">Name</label>
+		<input type="text" id="txtName" data-bind="value: newEntry().name" /><br />
+	<label for="txtAddress1">Address Line 1</label>
+		<input type="text" id="txtAddress1" data-bind="value: newEntry().name" /><br />
+	<label for="txtAddress2">Address Line 2</label>
+		<input type="text" id="txtAddress2" data-bind="value: newEntry().name" /><br />
+	<label for="txtCity">City</label>
+		<input type="text" id="txtCity" data-bind="value: newEntry().name" /><br />
+	<label for="txtState">State</label>
+		<input type="text" id="txtState" data-bind="value: newEntry().name" /><br />
+	<label for="txtZipCode">Zip Code</label>
+		<input type="text" id="txtZipCode" data-bind="value: newEntry().name" /><br />
+	<div class="button-strip">
+		<input type="button" data-bind="click: save, disable: isSaving, value: saveText" />
+	</div>
+</div>
+
+<!-- Dialog Example -->
+<h1>A Contrived User Dialog Example</h1>
+<div class="form-area" data-bind="with: orderHistory">
+	<h3>Past Orders</h3>
+	<table class="order-history">
+		<thead>
+			<tr><th>Id</th><th>Contents</th><th>Price</th><th></th></tr>
+		</thead>
+		<tbody data-bind="foreach: orders">
+			<tr data-bind="css: { 'new-order': isNew }">
+				<td data-bind="text: id"></td>
+				<td data-bind="foreach: contents">
+					<div data-bind="text: $data"></div>
+				</td>
+				<td data-bind="text: price"></td>
+				<td><a href="javascript: void(0);" data-bind="click: $parent.reorder, disable: $parent.isReordering, css: { disabled: $parent.isReordering }">re-order</a></td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<!-- User Dialog Display -->
+<div class="dialog-area" style"display: none;" data-bind="if: userDialogService.isVisible, visible: userDialogService.isVisible">
+	<div class="whiteout"></div>
+	<div class="dialog">
+		<div data-bind="template: { name: userDialogService.template, data: userDialogService.viewmodel }"></div>
+		<div data-bind="foreach: userDialogService.buttonActions" class="button-strip">
+			<input type="button" data-bind="value: text, click: action" />
+		</div>
+	</div>
+</div>
+
+<script type="text/html" id="product-alternative-dialog">
+<table>
+	<thead>
+		<tr><th>Out of Stock Product</th><th>Options<th></tr>
+	</thead>
+	<tbody data-bind="foreach: productChoices">
+		<tr>
+			<td data-bind="text: product"></td>
+			<td>
+				<select data-bind="options: alternatives, optionsText: 'product', optionsCaption: 'Remove from Order', value: selection"></select>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</script>
+
+<script type="text/javascript">
+
+//- Fake API Service
+
+var fakeService = {
+	// a slow shipping addres save that simulates a real save
+	saveShippingAddress: function(data){
+		return Promise.delay(500)
+		.then(function(){
+			return "Complete!";
+		});			
+	},
+	// a verify stock function that reports an outage for 'ABC Red Paint #12' and alternatives
+	verifyStock: function(product){
+		return Promise.delay(500)
+		.then(function(){
+			if(product == 'ABC Red Paint #12'){
+				return {
+					product: product,
+					status: 'out of stock',
+					alternatives: [
+						{ product: 'New ABC Red Paint #12', price: 5.99 },
+						{ product: 'XYZ Red Paint', price: 4.49 },
+						{ product: 'XYZ Red Paint #12 Alternative', price: 5.59 }
+					]
+				};
+			}
+			else{
+				return {
+					product: product,
+					status: 'in stock'
+				};
+			}
+		});
+	}
+}
+
+//- Super Basic User Dialog Service
+function BasicUserDialogService(){
+	var self = this;
+
+	self.isVisible = ko.observable(false);
+	self.template = ko.observable(null);
+	self.viewmodel = ko.observable(null);
+
+	self.buttonActions = ko.observableArray();
+
+	self.askAboutOutOfStockProductAlternatives = function(productAlternatives){
+		var viewmodel = new ProductAlternativesViewmodel(productAlternatives);
+
+		self.template('product-alternative-dialog');
+		self.viewmodel(viewmodel);
+
+		return new Promise(function(resolve){ 
+			self.buttonActions([
+				{ 
+					text: 'cancel', 
+					action: function(){
+						clear();
+						resolve('cancel');
+					} 
+				},
+				{ 
+					text: 'done', 
+					action: function(){
+						clear();
+						resolve(viewmodel.getResults());
+					} 
+				}
+			]);
+			self.isVisible(true);
+		});
+	};
+
+	function clear(){
+		self.isVisible(false);
+		self.template(null);
+		self.viewmodel(null);
+	}
+};
+
+function ProductAlternativesViewmodel(productAlternatives){
+	var self = this;
+
+	self.productChoices = productAlternatives.map(function(alternative){
+		return {
+			product: alternative.product,
+			alternatives: alternative.alternatives,
+			selection: ko.observable()
+		}
+	});
+	self.getResults = function(){
+		return self.productChoices.map(function(choice){
+			return choice.selection();
+		});
+	};
+}
+
+//- Parent Viewmodel to hold samples
+
+function ConversationsViewModel(dataService, userDialogService, pastOrdersRawData){
+	var self = this;
+
+	self.userDialogService = userDialogService;
+
+	self.shippingForm = new ShippingFormViewModel(dataService);
+
+	self.orderHistory = new OrderHistoryViewModel(dataService, userDialogService, pastOrdersRawData);
+}
+
+//- Shipping Form Example
+function ShippingFormViewModel(dataService){
+	var self = this;
+
+	self.isSaving = ko.observable(false);
+	self.saveStatus = ko.observable(null);
+	self.saveText = ko.computed(function(){
+		return self.saveStatus() || "Save";
+	});
+
+	self.newEntry = ko.observable(new AddressEntryModel());
+
+	self.save = function(){
+		if(self.isSaving())
+			return;
+
+		self.isSaving(true);
+		self.saveStatus("Saving...");
+
+		dataService.saveShippingAddress(self.newEntry())
+		.then(function(status){
+			self.isSaving(false);
+			self.saveStatus(status);
+		})
+		.delay(750)
+		.then(function(){
+			self.saveStatus(null);
+		});
+	};
+}
+
+function AddressEntryModel(){
+	var self = this;
+
+	self.name = ko.observable();
+	self.address1 = ko.observable();
+	self.address2 = ko.observable();
+	self.city = ko.observable();
+	self.state = ko.observable();
+	self.zipCode = ko.observable();
+}
+
+//- User Dialog Example
+
+function OrderHistoryViewModel(dataService, userDialogService, pastOrdersRawData){
+	var self = this;
+
+	self.orderStatus = ko.observable();
+
+	pastOrdersRawData = pastOrdersRawData || [];
+	var pastOrders = pastOrdersRawData.map(function(rawOrder){
+		return new OrderModel(rawOrder);
+	});
+	self.orders = ko.observableArray(pastOrders);
+
+	self.isReordering = ko.observable(false);
+	self.reorder = function(priorOrder){
+		var newOrder = new OrderModel({ id: 'pending', contents:[], price: 0 });
+		self.isReordering(true);
+
+		// verify stock from past order products
+		var stockChecks = priorOrder.contents().map(function(product){
+			return dataService.verifyStock(product);
+		});
+
+		// add in stock items to list, ask user about out of stock products
+		Promise.all(stockChecks)
+		.then(function(results){
+			// add in stock products to order
+			results.filter(function(result){
+				if(result.status == 'in stock'){
+					newOrder.contents.push(result.product);
+				}
+			});
+
+			// pass on the list of out of stock products
+			var outOfStockResults = results.filter(function(result){
+				return result.status == 'out of stock';
+			});
+
+			return outOfStockResults;
+		})
+		.then(function(outOfStockResults){
+			// if there are out of stock products, call the user and ask what to do about them
+			if(outOfStockResults.length > 0){
+				return userDialogService.askAboutOutOfStockProductAlternatives(outOfStockResults)
+				.then(function(answers){
+					if(answers == 'cancel'){
+						newOrder = null;	
+					}
+					else{
+						// add in the alternatives
+						answers.forEach(function(selectedChoice){
+							if(selectedChoice != null){
+								newOrder.contents.push(selectedChoice.product);
+							}
+						});
+					}
+				});
+			}
+		})
+		.then(function(){
+			// the order hasn't been cancelled, add it to the list
+			if(newOrder != null){
+				self.orders.unshift(newOrder);
+			}
+			self.isReordering(false);
+		});
+	};
+}
+
+function OrderModel(rawOrder){
+	var self = this;
+
+	self.id = ko.observable(rawOrder.id);
+	self.contents = ko.observableArray(rawOrder.contents);
+	self.price = ko.observable(rawOrder.price);
+
+	self.isNew = ko.computed(function(){
+		return self.id() == 'pending';
+	});
+}
+
+//- Viewmodel + applyBindings
+var pastRawOrders = [
+	{ id: '10000123', price: 85.46, contents: [ 'Iron Rake', 'Bucket', 'Grass Seed', 'Fertilizer' ] },
+	{ id: '08987819', price: 25.83, contents: [ 'Paintbrush', 'Dropcloth', 'ABC Red Paint #12' ] },
+	{ id: '08566556', price: 45.20, contents: [ 'Paintbrush', 'Roller', 'Painter\'s Tape', 'Solvent' ] }
+];
+
+var userDialogService = new BasicUserDialogService();
+var viewmodel = new ConversationsViewModel(fakeService, userDialogService, pastRawOrders);
+ko.applyBindings(viewmodel);
+
+
+</script>
+<body>
+</html>
