@@ -8,31 +8,6 @@ Promise.config({
     warnings: false
 });
 
-describe("ShippingFormViewModel", function(){
-	
-	describe("save()", function(){
-	
-		it("clears saving status when server save is successful", function(done){
-			// arrange
-			var fakeService = {
-				saveShippingAddress: function(){ return Promise.resolve('Success'); }
-			};
-			var vm = new ShippingFormViewModel(fakeService);
-
-			// act
-			var afterSave = vm.save();
-			
-			// assert
-			afterSave.then(function(){			
-				expect(vm.saveStatus()).toBeNull();
-				expect(vm.isSaving()).toBe(false);
-			}).finally(done, done.fail);
-		});
-
-	});
-
-});
-
 describe("OrderHistoryViewModel", function(){
 	
 	describe("reorder()", function(){

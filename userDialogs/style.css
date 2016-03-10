@@ -1,0 +1,113 @@
+body{
+	color: #312c32;
+	font-family: sans-serif;
+	font-size: 11pt;
+}
+a:hover{
+	color: #98dafc;
+}
+a.disabled{
+	color: #666666;
+}
+input[type=text]{
+	width: 150px;
+	height: 20px;
+	margin: 2px 0px;
+	border-radius: 4px;
+	border: 1px solid #dddddd;
+	padding: 2px 6px;
+	line-height: 16px;
+}
+input[type=text]:focus{
+	border: 1px solid #98dafc;
+}
+input[type=button]{
+	background-color: #98dafc;
+	border: 1px solid #312c32;
+	color: #312c32;
+	border-radius: 4px;
+	min-width: 100px;
+	padding: 4px;
+}
+input[type=button]:hover{
+	background-color: #A8Eafc;
+}
+input[type=button]:disabled{
+	background-color: #eeeeee;
+	border-color: #666666;
+	color: #666666;
+}
+.button-strip{
+	margin-top: 10px;
+	text-align: right;
+}
+
+.form-area{
+	background-color: white;
+	border: 1px solid #312c32;
+	width: 380px;
+	padding: 10px;
+	border-radius: 8px;
+	vertical-align: middle;
+}
+.form-area h3{
+	margin-top: 0px;
+	border-bottom: 1px solid 
+}
+.form-area label{
+	display: inline-block;
+	width: 150px;
+	text-align: right;
+	padding-right: .5em;
+	line-height: 24px;
+}
+
+.order-history{
+	width: 100%;
+	border-collapse: collapse;
+}
+.order-history td,
+.order-history th{
+	padding: 2px 4px;
+}
+.order-history th{
+	border-bottom: 1px solid #666666;
+}
+.order-history tbody tr:nth-child(odd) {
+  background-color: #eeeeee;
+}
+.order-history tbody tr.new-order {
+  background-color: #eeffee;
+}
+.order-history tbody tr.new-order:nth-child(odd) {
+  background-color: #ddffdd;
+}
+
+.dialog-area{
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+}
+.whiteout{
+	position: absolute;
+	z-index: 100;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	left: 0px;
+	background-color: white;
+	opacity: .8;
+}
+.dialog{
+	position: relative;
+	z-index: 101;
+	top: 200px;
+	width: 400px;
+	margin: auto;
+	background-color: white;
+	border: 1px solid #312c32;
+	padding: 10px;
+	border-radius: 8px;
+}

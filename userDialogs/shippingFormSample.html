@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>User Conversations - Shipping Form</title>
+    <script src="../lib/knockout-3.4.0.js"></script>
+    <script src="../lib/bluebird-3.3.3.js"></script>
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- API Example -->
+<h1>A Basic Form + Fake API Call (Save Button)</h1>
+<div class="form-area">
+	<h3>Shipping Information</h3>
+	<label for="txtName">Name</label>
+		<input type="text" id="txtName" data-bind="value: newEntry().name" /><br />
+	<label for="txtAddress1">Address Line 1</label>
+		<input type="text" id="txtAddress1" data-bind="value: newEntry().name" /><br />
+	<label for="txtAddress2">Address Line 2</label>
+		<input type="text" id="txtAddress2" data-bind="value: newEntry().name" /><br />
+	<label for="txtCity">City</label>
+		<input type="text" id="txtCity" data-bind="value: newEntry().name" /><br />
+	<label for="txtState">State</label>
+		<input type="text" id="txtState" data-bind="value: newEntry().name" /><br />
+	<label for="txtZipCode">Zip Code</label>
+		<input type="text" id="txtZipCode" data-bind="value: newEntry().name" /><br />
+	<div class="button-strip">
+		<input type="button" data-bind="click: save, disable: isSaving, value: saveText" />
+	</div>
+</div>
+
+
+<script src="shippingFormSample.js"></script>
+<script type="text/javascript">
+
+	var fakeService = {
+		// a slow shipping address save that simulates a real save
+		saveShippingAddress: function(data){
+			return Promise.delay(500)
+			.then(function(){
+				return "Complete!";
+			});			
+		}
+	}
+
+	var viewmodel = new ShippingFormViewModel(fakeService);
+	ko.applyBindings(viewmodel);
+
+</script>
+<body>
+</html>
