@@ -1,0 +1,23 @@
+Example Warehouse Managament System
+
+Initially I started building this to serve as sample code for a blog post on how to manage duplicated validation logic for an application with different front-end and back-end languages. But as I put togetehr the example, I realised I was building enough of a system that I could also use it to show some other techniques. 
+
+Other Potential Blog Posts:
+
+- API Tests to ensure authorization is in place
+- Extremely simple setup for authentication
+- Collecting Unhandled JS Errors
+- Retry of AJAX commands for flaky networks - extra value of using promise architecture
+- ETag processing using IHttpActionResult
+- setting up jshint
+
+
+Next Steps:
+
+- Authentication/Login form
+- basic CSS
+- basic JS Unit Tests
+- basic C# unit Tests
+- validation that user can perform action
+- validation of incoming objects (is this a valid order)
+- cross validation with UI for user authorization
