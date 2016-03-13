@@ -38,6 +38,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Autofac, Version=3.5.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.3.5.0\lib\net40\Autofac.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Autofac.Integration.Mvc, Version=3.3.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.Mvc5.3.3.4\lib\net45\Autofac.Integration.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Autofac.Integration.WebApi, Version=3.4.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.WebApi2.3.4.0\lib\net45\Autofac.Integration.WebApi.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.DynamicData" />
@@ -93,20 +105,57 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\Site.css" />
+    <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
+    <Content Include="Scripts\lib\knockout-3.4.0.js" />
+    <Content Include="Scripts\lib\zepto-1.1.6.js" />
+    <Content Include="Scripts\lib\zousan-2.2.2.js" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\boot.js" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\console.js" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\jasmine-html.js" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\jasmine.css" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\jasmine.js" />
+    <Content Include="Scripts\specs\jasmine-2.4.1\jasmine_favicon.png" />
+    <Content Include="Scripts\specs\specrunner.html" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Start\AutofacConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Backend\FakeBackendServices.cs" />
+    <Compile Include="Backend\Data\InventoryLevel.cs" />
+    <Compile Include="Backend\Data\InventoryOrder.cs" />
+    <Compile Include="Backend\Data\InventoryOrderLine.cs" />
+    <Compile Include="Backend\Data\User.cs" />
+    <Compile Include="Backend\Data\InventoryPermissions.cs" />
+    <Compile Include="Backend\Data\WarehousePermissions.cs" />
+    <Compile Include="Backend\IBackendServices.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\InventoryController.cs" />
+    <Compile Include="Controllers\UserController.cs" />
+    <Compile Include="Models\HomeModel.cs" />
+    <Compile Include="Models\v1\InventoryLevelModel.cs" />
+    <Compile Include="Models\v1\InventoryOrderLineModel.cs" />
+    <Compile Include="Controllers\OrdersController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\v1\InventoryOrderModel.cs" />
+    <Compile Include="Models\v1\UserModel.cs" />
+    <Compile Include="Models\v1\WarehousePermissionsModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\web.config" />
     <Content Include="packages.config" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -116,8 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Controllers\" />
-    <Folder Include="Models\" />
+    <Folder Include="Scripts\src\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
