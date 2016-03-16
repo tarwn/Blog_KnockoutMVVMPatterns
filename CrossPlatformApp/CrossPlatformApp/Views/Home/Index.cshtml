@@ -1,0 +1,354 @@
+﻿@model CrossPlatformApp.Models.HomeModel
+@{
+    ViewBag.Title = "Inventory Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div data-bind="if: !isLoaded()">
+    Loading your warehouses...
+</div>
+<div data-bind="if: isLoaded">
+    <div data-bind="if: currentOrder">
+        <h2>Placing a New Order</h2>
+        <div data-bind="if: currentOrder().IsEmpty">Select "reorder" to start a new shipment</div>
+        <div data-bind="ifnot: currentOrder().IsEmpty">
+            <table>
+                <tr>
+                    <th>Warehouse</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                </tr>
+                <tbody data-bind="foreach: currentOrder().contents">
+                    <tr>
+                        <td data-bind="text: warehouse"></td>
+                        <td data-bind="text: product"></td>
+                        <td><input type="text" data-bind="value: quantity" /></td>
+                    </tr>
+                </tbody>
+            </table>
+            <input type="button" value="Place Order" data-bind="click: placeOrder" />
+        </div>
+    </div>
+    
+    <div>
+        <h2>Pending Orders</h2>
+        <div data-bind="ifnot: hasPendingOrders">No pending orders right now...</div>
+        <table data-bind="if: hasPendingOrders">
+            <tr>
+                <th>id</th>
+                <th>contents</th>
+            </tr>
+            <tbody data-bind="foreach: pendingOrders">
+                <tr>
+                    <td data-bind="text: id"></td>
+                    <td>
+                        <table>
+                            <tbody data-bind="foreach: contents">
+                                <tr>
+                                    <td data-bind="text: warehouse"></td>
+                                    <td data-bind="text: product"></td>
+                                    <td data-bind="text: quantity"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <h2>Current Warehouse Levels</h2>
+        <div data-bind="ifnot: hasCurrentInventoryLevels">No inventory available for the warehouses you can see</div>
+        <table data-bind="if: hasCurrentInventoryLevels">
+            <tr>
+                <th>Warehouse</th>
+                <th>Product</th>
+                <th>Stock</th>
+                <th></th>
+            </tr>
+            <tbody data-bind="foreach: currentInventoryLevels">
+                <tr>
+                    <td data-bind="text: warehouse"></td>
+                    <td data-bind="text: product"></td>
+                    <td data-bind="text: quantity"></td>
+                    <td><a href="javascript: void(0)" data-bind="click: $parent.reorder, enabled: $parent.isUserAllowedToReorder">reorder</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var Promise = Zousan;
+    var currentUserId = '@Model.UserId';
+
+    function DataService() {
+        var self = this;
+
+        // internal methods to simplify calls and move everything to one type of Promise object
+        function get(url) {
+            return new Promise(function (resolve, reject) {
+                $.ajax({
+                    type: 'GET',
+                    url: url,
+                    dataType: 'json',
+                    success: function (data, status, xhr) {
+                        resolve({
+                            data: data,
+                            status: status,
+                            xhr: xhr
+                        })
+                    },
+                    error: function (xhr, errorType, error) {
+                        reject({
+                            xhr: xhr,
+                            errorType: errorType,
+                            error: error
+                        })
+                    }
+                });
+            });
+        }
+
+        function post(url, data) {
+            var jsonData = ko.toJSON(data);
+            return new Promise(function (resolve, reject) {
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: jsonData,
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (data, status, xhr) {
+                        resolve({
+                            data: data,
+                            status: status,
+                            xhr: xhr
+                        });
+                    },
+                    error: function (xhr, errorType, error) {
+                        reject({
+                            xhr: xhr,
+                            errorType: errorType,
+                            error: error
+                        });
+                    }
+                });
+            });
+        }
+
+        function handleError(reject, error) {
+            if (error.xhr) {
+                reject({
+                    errorType: error.errorType,
+                    error: error.error,
+                    errorContent: error.xhr.responseText
+                });
+            }
+            else {
+                reject(error);
+            }
+        }
+
+        // inventory
+        self.getCurrentWarehouseLevels = function getCurrentWarehouseLevels() {
+            return new Promise(function (resolve, reject) {
+                get('/api/v1/inventory').then(function (response) {
+                    var processedData = response.data.map(function (row) {
+                        return new WarehouseInventoryLevelModel(row);
+                    });
+                    resolve(processedData);
+                }).catch(function(error){
+                    handleError(reject, error);
+                });
+            });
+        };
+
+        // orders
+        self.getAllPendingOrders = function getAllPendingOrders() {
+            return new Promise(function (resolve, reject) {
+                get('/api/v1/orders').then(function(response){
+                    var processedData = response.data.map(function (row) {
+                        return new PendingOrderModel(row);
+                    });
+                    resolve(processedData);
+                }).catch(function (error) {
+                    handleError(reject, error);
+                });
+            });
+        }
+
+        self.submitNewOrder = function submitNewOrder(orderContents) {
+            return new Promise(function (resolve, reject) {
+                post('/api/v1/orders', orderContents).then(function (response) {
+                    var responseOrder = new PendingOrderModel(response.data);
+                    resolve(responseOrder);
+                }).catch(function (error) {
+                    handleError(reject, error);
+                });
+            });
+        }
+
+        // user
+
+        self.getCurrentUser = function getCurrentUser() {
+            return new Promise(function (resolve, reject) {
+                get('/api/v1/users/' + currentUserId).then(function(response){
+                    var user = new UserModel(response.data);
+                    resolve(user);
+                }).catch(function (error) {
+                    handleError(reject, error);
+                });
+            });
+        };
+    }
+
+    function WarehouseInventoryLevelModel(rawData)
+    {
+        this.warehouse = rawData.warehouse;
+        this.product = rawData.product;
+        this.quantity = rawData.quantity;
+    }
+
+    function InventoryOrderModel(rawData) {
+        var self = this;
+        
+        if (rawData == null) {
+            self.id = "new";
+            self.contents = ko.observableArray([]);
+        }
+        else {
+            var orderLines = [];
+            if (rawData != null) {
+                orderLines = rawData.map(function (rawLine) {
+                    return new InventoryLineOrderModel(rawLine);
+                });
+            }
+
+            self.id = rawData.id;
+            self.contents = ko.observableArray(orderLines);
+        }
+
+        self.addLine = function addLine(newLine) {
+            self.contents.push(newLine);
+        };
+        
+        self.isEmpty = ko.computed(function () {
+            return self.contents().length == 0;
+        });
+    }
+
+    function InventoryLineOrderModel(rawData) {
+        this.warehouse = ko.observable(rawData.warehouse);
+        this.product = ko.observable(rawData.product);
+        this.quantity = ko.observable(rawData.quantity);
+    }
+
+    function PendingOrderModel(rawData) {
+        this.id = rawData.id;
+        this.contents = rawData.contents.map(function (line) {
+            return new PendingOrderLineModel(line);
+        });
+    }
+
+    function PendingOrderLineModel(rawData) {
+        this.warehouse = ko.observable(rawData.warehouse);
+        this.product = ko.observable(rawData.product);
+        this.quantity = ko.observable(rawData.quantity);
+    }
+
+    function UserModel(rawData) {
+        this.id = rawData.id;
+        this.permissions = ko.observable(rawData.permissions.map(function (permission) {
+            return new WarehousePermissionsModel(permission);
+        }));
+    }
+
+    function WarehousePermissionsModel(rawPermission) {
+        this.warehouses = rawPermission.warehouses;
+        this.permissions = rawPermission.permissions;
+    }
+
+    function InventoryViewModel(dataService)
+    {
+        var self = this;
+
+        self.isLoaded = ko.observable(false);
+
+        self.currentUser = ko.observable();
+        self.currentInventoryLevels = ko.observableArray();
+        self.pendingOrders = ko.observableArray();
+        self.currentOrder = ko.observable(null);
+
+        self.hasCurrentInventoryLevels = ko.computed(function () {
+            return self.currentInventoryLevels != null && self.currentInventoryLevels().length > 0;
+        });
+        self.hasPendingOrders = ko.computed(function () {
+            return self.pendingOrders != null && self.pendingOrders().length > 0;
+        });
+
+        self.loadCurrentUser = function loadCurrentUser() {
+            return dataService.getCurrentUser().then(function (user) {
+                self.currentUser(user);
+            });
+        };
+
+        self.loadInventory = function loadInventory() {
+            return dataService.getCurrentWarehouseLevels().then(function (data) {
+                self.currentInventoryLevels(data);
+            });
+        };
+
+        self.reorder = function reorder(inventoryItem) {
+            if (self.currentOrder() == null) {
+                self.currentOrder(new InventoryOrderModel());
+            }
+
+            self.currentOrder().addLine(new InventoryLineOrderModel({
+                warehouse: inventoryItem.warehouse,
+                product: inventoryItem.product,
+                quantity: 1
+            }));
+        };
+
+        self.loadPendingOrders = function loadPendingOrders() {
+            return dataService.getAllPendingOrders().then(function (pendingOrders) {
+                self.pendingOrders(pendingOrders);
+            });
+        };
+
+        self.isUserAllowedToReorder = function isUserAllowedToReorder(inventory) {
+            return true;
+        };
+
+        self.placeOrder = function placeOrder() {
+            return dataService.submitNewOrder(self.currentOrder()).then(function () {
+                return self.loadPendingOrders();
+            }).then(function () {
+                self.currentOrder(null);
+            });
+        };
+
+        self.initialize = function initialize() {
+            return self.loadCurrentUser().then(function () {
+                var initialDataLoads = [
+                    self.loadInventory(),
+                    self.loadPendingOrders()
+                ];
+                return Promise.all(initialDataLoads)
+            }).then(function () {
+                self.isLoaded(true);
+            }).catch(function (error) {
+                console.log(error);
+            });
+        };
+
+        self.whenLoaded = self.initialize();
+    }
+
+    var dataService = new DataService();
+    var viewmodel = new InventoryViewModel(dataService);
+    ko.applyBindings(viewmodel);
+
+</script>
