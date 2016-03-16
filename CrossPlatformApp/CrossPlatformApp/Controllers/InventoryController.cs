@@ -20,6 +20,7 @@ namespace CrossPlatformApp.Controllers
 
         [HttpGet]
         [Route("api/v1/inventory")]
+        [Authorize]
         public List<InventoryLevelModel> GetCurrentWarehouseLevels()
         {
             // authorize user

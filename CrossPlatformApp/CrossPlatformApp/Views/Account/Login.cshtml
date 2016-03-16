@@ -1,0 +1,13 @@
+﻿@model CrossPlatformApp.Models.HomeModel
+@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h2>Login</h2>
+@using (Html.BeginForm()) { 
+    <div>
+        <label for="txtUserName">UserName:</label><input type="text" id="txtUserName" name="UserName" /><br />
+        <label for="txtPassword">Password:</label><input type="text" id="txtPassword" name="Password" /><br />
+        <input type="submit" value="Login" />
+    </div>
+}

@@ -132,9 +132,11 @@
     <Compile Include="Backend\Data\InventoryPermissions.cs" />
     <Compile Include="Backend\Data\WarehousePermissions.cs" />
     <Compile Include="Backend\IBackendServices.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InventoryController.cs" />
     <Compile Include="Controllers\UserController.cs" />
+    <Compile Include="Models\Account\LoginModel.cs" />
     <Compile Include="Models\HomeModel.cs" />
     <Compile Include="Models\v1\InventoryLevelModel.cs" />
     <Compile Include="Models\v1\InventoryOrderLineModel.cs" />
@@ -156,6 +158,8 @@
     <Content Include="fonts\glyphicons-halflings-regular.woff" />
     <Content Include="fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Home\AccidentalOpenEndpoint.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

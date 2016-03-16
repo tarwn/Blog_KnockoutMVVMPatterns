@@ -20,6 +20,7 @@ namespace CrossPlatformApp.Controllers
 
         [HttpGet]
         [Route("api/v1/users/{id}")]
+        [Authorize]
         public UserModel Index(string id)
         {
             //authorize user

@@ -18,10 +18,16 @@ namespace CrossPlatformApp.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public ActionResult Index()
         {
             return View(new HomeModel("abc123"));
         }
 
+        [HttpGet]
+        public ActionResult AccidentalOpenEndpoint()
+        {
+            return View();
+        }
     }
 }

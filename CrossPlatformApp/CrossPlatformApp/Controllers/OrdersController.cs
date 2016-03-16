@@ -21,6 +21,7 @@ namespace CrossPlatformApp.Controllers
 
         [HttpGet]
         [Route("api/v1/orders")]
+        [Authorize]
         public List<InventoryOrderModel> GetAllPendingOrders()
         {
             // authorize user
@@ -34,6 +35,7 @@ namespace CrossPlatformApp.Controllers
 
         [HttpPost]
         [Route("api/v1/orders")]
+        [Authorize]
         public InventoryOrderModel SubmitOrder(InventoryOrderModel order)
         {
             // authorize user
@@ -53,5 +55,16 @@ namespace CrossPlatformApp.Controllers
             return new InventoryOrderModel(updatedOrder);
         }
 
+        [HttpGet]
+        [Route("api/v1/orders/secrets")]
+        public List<string> DownloadAllTheSecretData()
+        {
+            return new List<string>() { 
+                "Oops",
+                "we",
+                "forgot",
+                "the authorization"
+            };
+        }
     }
 }

@@ -68,5 +68,12 @@ namespace CrossPlatformApp.Backend
         {
             return _users.SingleOrDefault(u => u.Id == id);
         }
+
+
+        public bool ValidateUser(string username, string password)
+        {
+            // you don't have to get the password right, this is a sample site
+            return _users.Any(u => u.Username == username);
+        }
     }
 }

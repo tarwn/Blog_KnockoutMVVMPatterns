@@ -15,5 +15,7 @@ namespace CrossPlatformApp.Backend
         List<InventoryOrder> GetPendingOrders();
 
         User GetUser(string id);
+
+        bool ValidateUser(string username, string password);
     }
 }
