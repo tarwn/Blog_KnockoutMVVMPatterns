@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossPlatformApp", "CrossPlatformApp\CrossPlatformApp.csproj", "{CEA3F1F8-91AA-4B10-8419-4D611D957041}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossPlatformAppTests", "CrossPlatformAppTests\CrossPlatformAppTests.csproj", "{A1B21770-DDFE-4335-925C-638ABE886A2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{CEA3F1F8-91AA-4B10-8419-4D611D957041}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEA3F1F8-91AA-4B10-8419-4D611D957041}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEA3F1F8-91AA-4B10-8419-4D611D957041}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B21770-DDFE-4335-925C-638ABE886A2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B21770-DDFE-4335-925C-638ABE886A2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B21770-DDFE-4335-925C-638ABE886A2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B21770-DDFE-4335-925C-638ABE886A2C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
