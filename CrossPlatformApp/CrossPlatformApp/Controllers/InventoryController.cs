@@ -9,6 +9,7 @@ using System.Web.Http;
 
 namespace CrossPlatformApp.Controllers
 {
+    [Authorize]
     public class InventoryController : ApiController
     {
         private readonly IBackendServices _backend;
@@ -20,7 +21,6 @@ namespace CrossPlatformApp.Controllers
 
         [HttpGet]
         [Route("api/v1/inventory")]
-        [Authorize]
         public List<InventoryLevelModel> GetCurrentWarehouseLevels()
         {
             // authorize user

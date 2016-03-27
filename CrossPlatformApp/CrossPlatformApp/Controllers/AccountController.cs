@@ -9,6 +9,7 @@ using System.Web.Security;
 
 namespace CrossPlatformApp.Controllers
 {
+    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly IBackendServices _backend;
@@ -19,14 +20,12 @@ namespace CrossPlatformApp.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
         public ActionResult Login()
         {
             return View();
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public ActionResult Login(LoginModel model, string password, string returnUrl)
         {
             if (ModelState.IsValid)
@@ -54,7 +53,6 @@ namespace CrossPlatformApp.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
         public ActionResult Logout()
         {
             FormsAuthentication.SignOut();

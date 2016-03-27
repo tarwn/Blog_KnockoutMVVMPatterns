@@ -26,7 +26,8 @@ namespace CrossPlatformAppTests
                                       .Select(c => new ReflectedControllerDescriptor(c));
 
             var actionsMissingAuth = controllers.SelectMany(c => c.GetCanonicalActions())
-                                                .Where(a => !a.GetCustomAttributes(true).Any(ca => IsMVCAttributeAuth(ca)));
+                                                .Where(a => !a.GetCustomAttributes(true).Any(ca => IsMVCAttributeAuth(ca)) &&
+                                                            !a.ControllerDescriptor.ControllerType.GetCustomAttributes(true).Any(c => IsMVCAttributeAuth(c)));
 
             if (actionsMissingAuth.Any())
             {

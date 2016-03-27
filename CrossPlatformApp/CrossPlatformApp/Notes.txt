@@ -14,10 +14,11 @@ Other Potential Blog Posts:
 
 Next Steps:
 
-- Authentication/Login form
+X Authentication/Login form
 - basic CSS
 - basic JS Unit Tests
 - basic C# unit Tests
+X C# Tests for endpoint authorization
 - validation that user can perform action
 - validation of incoming objects (is this a valid order)
 - cross validation with UI for user authorization
