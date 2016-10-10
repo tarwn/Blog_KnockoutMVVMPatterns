@@ -9,16 +9,19 @@
 
   <script src="../lib/jasmine-2.4.1/jasmine.js"></script>
   <script src="../lib/jasmine-2.4.1/jasmine-html.js"></script>
-  <script src="../lib/jasmine-2.4.1/boot.js"></script>
+  <script src="../lib/jasmine-2.4.1/boot-without-onload.js"></script>
 
-  <script src="../lib/knockout-3.4.0.js"></script>
-  <script src="../lib/bluebird-3.3.3.js"></script>
+    <script src="../lib/require.js"></script>
+    <script src="specs/main.js"></script>
 
-  <script src="shippingFormSample.js"></script>
-  <script src="shippingFormSample.spec.js"></script>
-
-  <script src="userDialogAPI.js"></script>
-  <script src="userDialogAPI.spec.js"></script>
+    <script type="text/javascript">
+        // list spec files here
+        require([
+            "specs/allSpecs"
+        ], function () {
+            window.executeTests();
+        });
+    </script>
 
 </head>
 

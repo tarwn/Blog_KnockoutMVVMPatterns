@@ -58,7 +58,6 @@ Enter Some Items:
 			var orderService = new OrderService();
 			var viewmodel = new OrderViewModel(orderService);
 			viewmodel.createNewOrder();
-			viewmodel.addNextItem();
 			ko.applyBindings(viewmodel);
 	});
 

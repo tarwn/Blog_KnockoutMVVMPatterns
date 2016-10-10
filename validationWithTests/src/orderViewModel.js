@@ -24,6 +24,7 @@ function(ko,
 		self.createNewOrder = function(){
 			var newOrder = orderService.getNewOrder()
 			self.order(new OrderPresentationModel(newOrder));
+			self.addNextItem();
 		};
 
 		self.saveToServer = function(){
