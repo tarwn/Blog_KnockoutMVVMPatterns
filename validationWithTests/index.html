@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Model Validation and Formatting</title>
+	<style>
+		.error{
+			border: color 1px solid red;
+		}
+		.error-message{
+			position: absolute;
+			border: 1px solid red;
+			background-color: #eeeeee;
+			padding: 3px;
+		}
+		.disabled{
+			color: #999999;
+		}
+	</style>
+</head>
+<body>
+
+Enter Some Items:
+<table data-bind="if: order">
+	<tr>
+		<th></th>
+		<th>Name</th>
+		<th>Price</th>
+		<th>Quantity</th>
+	</tr>
+	<tbody data-bind="foreach: order().items">
+		<tr>
+			<td><a href="javascript: void(0);" data-bind="click: $parent.removeItem">del</a></td>
+			<td><validated-input params="field: name, validation: name.validation" /></td>
+			<td><validated-input params="field: price, validation: price.validation" /></td>
+			<td><validated-input params="field: quantity, validation: quantity.validation" /></td>
+			<td data-bind="text: total"></td>
+		</tr>
+	</tbody>
+	<tfoot>
+		<tr>
+			<td><a href="javascript: void(0);"  data-bind="click: addNextItem">add</a></td>
+			<td></td>
+			<td></td>
+			<td><input type="button" value="save" data-bind="enable: order().isSaveAvailable, click: saveToServer" /></td>
+			<td data-bind="text: order().total"></td>
+		</tr>
+	</tfoot>
+</table>
+
+<script src="../lib/require.js"></script>
+<script src="src/main.js"></script>
+
+<script type="text/javascript">
+
+	require(['knockout', 'services/orderService', 'orderViewModel'],
+		function(ko, OrderService, OrderViewModel){
+			var orderService = new OrderService();
+			var viewmodel = new OrderViewModel(orderService);
+			viewmodel.createNewOrder();
+			viewmodel.addNextItem();
+			ko.applyBindings(viewmodel);
+	});
+
+</script>
+</body>
+</html>
